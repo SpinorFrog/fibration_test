@@ -36,8 +36,8 @@ void main()
     //n += time/6;
     n = mod(n, PI/2);
 
-    float e1 = (4.0f/4.0f)*PI*pos.y + zCoord*PI/12;
-    float e2 = 4.0f*PI*pos.x;
+    float e1 = (5.0f/4.0f)*PI*pos.y + zCoord*PI/10;
+    float e2 = 3.5f*PI*pos.x;
 
     vec4 hopf = vec4(cos((e1 + e2)/2)*sin(n), sin((e1 + e2)/2)*sin(n), cos((e2 - e1)/2)*cos(n), sin((e2 - e1)/2)*cos(n));
     

@@ -74,20 +74,22 @@ mat4 transform(float parameter){
    rot = 2 <= y axis rotation
    rot = 3 <= x axis rotation
    */
-   int rot = 2;
-   float w = parameter;
+   int rot = 4;
+   float w = exp(1.5*sin(parameter/1.5));
 
    suTrans0[0] = vec4(sqrt(w), 0, 0, 0);
    suTrans0[1] = vec4(0, sqrt(w), 0, 0);
    suTrans0[2] = vec4(0, 0, inversesqrt(w), 0);
    suTrans0[3] = vec4(0, 0, 0, inversesqrt(w));
 
+   p = parameter/5;
+
    suTrans1[0] = vec4(cos(p/2), -sin(p/2), 0, 0);
    suTrans1[1] = vec4(sin(p/2), cos(p/2), 0, 0);
    suTrans1[2] = vec4(0, 0, cos(p/2), sin(p/2));
    suTrans1[3] = vec4(0, 0, -sin(p/2), cos(p/2));
 
-   //p /= 10;
+   p = parameter;
 
    suTrans2[0] = vec4(cos(p/2), 0, -sin(p/2), 0);
    suTrans2[1] = vec4(0, cos(p/2), 0, -sin(p/2));
@@ -107,8 +109,12 @@ mat4 transform(float parameter){
       suTrans = transpose(suTrans2);
    if(rot == 3)
       suTrans = transpose(suTrans3);
+   if(rot == 4)
+      suTrans = transpose(suTrans1*suTrans0);
 
-   //suTrans = transpose(suTrans3*suTrans2);
+   //suTrans = transpose(suTrans);
+   //suTrans = transpose(suTrans3*suTrans2*suTrans0);
+   //suTrans = transpose(suTrans1*suTrans0);
 
    return suTrans;
 }//
