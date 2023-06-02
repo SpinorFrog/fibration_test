@@ -74,7 +74,7 @@ mat4 transform(float parameter){
    rot = 2 <= y axis rotation
    rot = 3 <= x axis rotation
    */
-   int rot = 4;
+   int rot = 2;
    float w = exp(1.5*sin(parameter/1.5));
 
    suTrans0[0] = vec4(sqrt(w), 0, 0, 0);
