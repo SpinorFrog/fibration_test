@@ -15,7 +15,7 @@ void processInput(GLFWwindow *window);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 
 //window size
-const unsigned int SCR_WIDTH = 2560;
+const unsigned int SCR_WIDTH = 3440;
 const unsigned int SCR_HEIGHT = 1440;
 
 Camera cam(0.0f, 0.0f, 0.0f);
