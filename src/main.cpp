@@ -51,7 +51,7 @@ int main(){
         return -1;
     }
 
-    const int gridX = 700, gridY = 700;
+    const int gridX = 800, gridY = 800;
     cShader main("shaders(comp)/update.comp", gridX, gridY);
     Shader shader("shaders(vf)/v_shader.vert","shaders(vf)/f_shader.frag");
 
@@ -90,7 +90,7 @@ int main(){
     cShader initial("shaders(comp)/initial.comp", gridX, gridY);
     initial.use();
 
-    const int grid_size = 700; 
+    const int grid_size = 800; 
     int vSize = grid_size*grid_size*5;
     int iSize = 6*(grid_size-1)*(grid_size-1);
 

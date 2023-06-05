@@ -1,7 +1,7 @@
 #version 460 core
 #define PI 3.141592653589
 
-layout(local_size_x = 7, local_size_y = 2, local_size_z = 7) in;
+layout(local_size_x = 8, local_size_y = 2, local_size_z = 8) in;
 layout(rgba32f, binding = 0) uniform image2D imgOutput;
 layout(rgba32f, binding = 1) uniform image2D data;
 
@@ -31,13 +31,13 @@ void main()
     //float par = pos.y;
 
     float n = 0;
-    n = (zCoord + 1)*PI/8;
+    n = (zCoord)*PI/8 + PI/16;
     n /= 2;
-    //n += time/6;
+    n -= time/12;
     n = mod(n, PI/2);
 
-    float e1 = (5.0f/4.0f)*PI*pos.y + zCoord*PI/11;
-    float e2 = 3.5f*PI*pos.x;
+    float e1 = (6.0f/4.0f)*PI*pos.y + zCoord*PI/11;
+    float e2 = 2.0f*PI*pos.x;
 
     vec4 hopf = vec4(cos((e1 + e2)/2)*sin(n), sin((e1 + e2)/2)*sin(n), cos((e2 - e1)/2)*cos(n), sin((e2 - e1)/2)*cos(n));
     
