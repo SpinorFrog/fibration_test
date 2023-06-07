@@ -11,7 +11,65 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-GLchar *LoadShader(const std::string &file);
+const char *LoadShader(const std::string &file){
+    /*std::ifstream shaderFile;
+    unsigned int shaderFileLength;
+
+    shaderFile.open(file);
+
+    if (shaderFile.fail())
+    {
+        throw std::runtime_error("COULD NOT FIND SHADER FILE");
+    }
+
+    shaderFile.seekg(0, shaderFile.end);
+    shaderFileLength = shaderFile.tellg();
+    //std::cout << shaderFileLength << std::endl;
+    shaderFile.seekg(0, shaderFile.beg);
+
+    GLchar *shaderCode = new GLchar[shaderFileLength + 1];
+    shaderFile.read(shaderCode, shaderFileLength);
+
+    shaderFile.close();
+
+    shaderCode[shaderFileLength] = '\0';
+
+    //std::cout << shaderCode << std::endl;
+
+	return shaderCode;*/
+    std::string computeCode;
+        std::fstream cShaderFile;
+        int vShaderLines = 1;
+
+        //open file tester
+        cShaderFile.open(file, std::ios::in);
+        std::string cline;
+        while(getline(cShaderFile, cline)){
+            vShaderLines ++;
+        }
+        cShaderFile.close(); 
+        
+        //read files
+        cShaderFile.open(file, std::ios::in);
+        std::string cline2;
+        while(getline(cShaderFile, cline2)){
+            vShaderLines --;
+            if(vShaderLines > 1){
+                computeCode += cline2 + "\n";
+            }
+            else{
+                computeCode += cline2 + "\0";    
+            }
+        }
+        cShaderFile.close();
+    const GLchar *cShaderCode = computeCode.c_str();
+
+    //GLchar *ccode = const_cast<GLchar *>(cShaderCode);
+
+    //std::cout << ccode << std::endl;
+
+    return cShaderCode;
+}
 
 class Shader
 {

@@ -1,0 +1,89 @@
+#version 460 core
+#define PI 3.141592653589
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
+layout(rgba32f, binding = 0) uniform image3D first_grid;
+layout(rgba32f, binding = 1) uniform image3D second_grid;
+layout(rgba32f, binding = 4) uniform image3D first_deriv;
+layout(rgba32f, binding = 5) uniform image3D second_deriv;
+//layout(rgba32f, binding = 1) uniform image2D data;
+
+//uniform mat4 viewmat;
+uniform float time;
+float res = 128.0f;
+void storeMatrix1(ivec3 texture_coordinates, mat4 data_matrix, int der);
+void storeMatrix2(ivec3 texture_coordinates, mat4 fourbythree_array, int der);
+mat4 readMatrix1(ivec3 texture_coordinates, ivec3 direction);
+mat4 readMatrix2(ivec3 texture_coordinates, ivec3 direction);
+float trace(mat3 matrix);
+float trace(mat4 matrix);
+
+float dx = 0.25f;
+
+void main()
+{
+    ivec3 texCoords = ivec3(gl_GlobalInvocationID.xyz);
+    vec3 pos = 32.0f*(vec3(texCoords) - res/2)/res;
+
+    //calculate derivatives
+    mat4 dx_first_grid = (readMatrix1(texCoords, ivec3(1, 0, 0)) - readMatrix1(texCoords, ivec3(-1, 0, 0)))/(2.0f*dx);
+    mat4 dy_first_grid = (readMatrix1(texCoords, ivec3(0, 1, 0)) - readMatrix1(texCoords, ivec3(0, -1, 0)))/(2.0f*dx);
+    mat4 dz_first_grid = (readMatrix1(texCoords, ivec3(0, 0, 1)) - readMatrix1(texCoords, ivec3(0, 0, -1)))/(2.0f*dx);
+
+    mat4 dx_second_grid = (readMatrix2(texCoords, ivec3(1, 0, 0)) - readMatrix2(texCoords, ivec3(-1, 0, 0)))/(2.0f*dx);
+    mat4 dy_second_grid = (readMatrix2(texCoords, ivec3(0, 1, 0)) - readMatrix2(texCoords, ivec3(0, -1, 0)))/(2.0f*dx);
+    mat4 dz_second_grid = (readMatrix2(texCoords, ivec3(0, 0, 1)) - readMatrix2(texCoords, ivec3(0, 0, -1)))/(2.0f*dx);
+
+    //store derivatives
+    storeMatrix1(texCoords, dx_first_grid, 0);
+    storeMatrix1(texCoords, dy_first_grid, 1);
+    storeMatrix1(texCoords, dz_first_grid, 2);
+
+    storeMatrix2(texCoords, dx_second_grid, 0);
+    storeMatrix2(texCoords, dy_second_grid, 1);
+    storeMatrix2(texCoords, dy_second_grid, 2);
+
+}
+
+float trace(mat3 matrix){
+    return matrix[0][0] + matrix[1][1] + matrix[2][2];
+}
+
+float trace(mat4 matrix){
+    return matrix[0][0] + matrix[1][1] + matrix[2][2] + matrix[3][3];
+}
+
+mat4 readMatrix1(ivec3 texture_coordinates, ivec3 direction){
+    mat4 new_matrix;
+    new_matrix[0] = imageLoad(first_grid, (texture_coordinates + direction)*ivec3(4, 1, 1) + ivec3(0, 0, 0));
+    new_matrix[1] = imageLoad(first_grid, (texture_coordinates + direction)*ivec3(4, 1, 1) + ivec3(1, 0, 0));
+    new_matrix[2] = imageLoad(first_grid, (texture_coordinates + direction)*ivec3(4, 1, 1) + ivec3(2, 0, 0));
+    new_matrix[3] = imageLoad(first_grid, (texture_coordinates + direction)*ivec3(4, 1, 1) + ivec3(3, 0, 0));
+
+    return new_matrix;
+}
+
+mat4 readMatrix2(ivec3 texture_coordinates, ivec3 direction){
+    mat4 array = mat4(0.0f);
+    array[0] = imageLoad(second_grid, (texture_coordinates + direction)*ivec3(3, 1, 1) + ivec3(0, 0, 0));
+    array[1] = imageLoad(second_grid, (texture_coordinates + direction)*ivec3(3, 1, 1) + ivec3(1, 0, 0));
+    array[2] = imageLoad(second_grid, (texture_coordinates + direction)*ivec3(3, 1, 1) + ivec3(2, 0, 0));
+
+    return array;
+}
+/*
+stores derivatives in respective slots
+*/
+void storeMatrix1(ivec3 texture_coordinates, mat4 data_matrix, int der){
+    imageStore(first_deriv, texture_coordinates*ivec3(4, 3, 1) + ivec3(0, der, 0), data_matrix[0]);    
+    imageStore(first_deriv, texture_coordinates*ivec3(4, 3, 1) + ivec3(1, der, 0), data_matrix[1]);  
+    imageStore(first_deriv, texture_coordinates*ivec3(4, 3, 1) + ivec3(2, der, 0), data_matrix[2]);    
+    imageStore(first_deriv, texture_coordinates*ivec3(4, 3, 1) + ivec3(3, der, 0), data_matrix[3]); 
+}
+
+void storeMatrix2(ivec3 texture_coordinates, mat4 sec_data_matrix, int der)
+{
+    imageStore(second_deriv, texture_coordinates*ivec3(3, 3, 1) + ivec3(0, der, 0), sec_data_matrix[0]);    
+    imageStore(second_deriv, texture_coordinates*ivec3(3, 3, 1) + ivec3(1, der, 0), sec_data_matrix[1]);  
+    imageStore(second_deriv, texture_coordinates*ivec3(3, 3, 1) + ivec3(2, der, 0), sec_data_matrix[2]);    
+}
+//

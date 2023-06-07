@@ -8,35 +8,6 @@
 
 float zoom_factor = 1, x_shift = 0, y_shift = 0;
 
-GLchar *LoadShader(const std::string &file)
-{
-    std::fstream shaderFile;
-    int shaderFileLength;
-
-    shaderFile.open(file);
-
-    if (shaderFile.fail())
-    {
-        throw std::runtime_error("COULD NOT FIND SHADER FILE");
-    }
-
-    shaderFile.seekg(0, shaderFile.end);
-    shaderFileLength = shaderFile.tellg();
-    //std::cout << shaderFileLength << std::endl;
-    shaderFile.seekg(0, shaderFile.beg);
-
-    GLchar *shaderCode = new GLchar[shaderFileLength + 1];
-    shaderFile.read(shaderCode, shaderFileLength);
-
-    shaderFile.close();
-
-    shaderCode[shaderFileLength] = '\0';
-
-    //std::cout << shaderCode << std::endl;
-
-	return shaderCode;
-}
-
 glm::mat4 viewmatrix(float x_res, float y_res){
     float scale_factor = 0.25f*y_res*zoom_factor;
     glm::mat4 viewmat = glm::mat4(1.0f);

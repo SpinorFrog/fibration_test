@@ -1,0 +1,88 @@
+#version 460 core
+#define PI 3.141592653589
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
+layout(rgba32f, binding = 0) uniform image3D initial_grid;
+layout(rgba32f, binding = 1) uniform image3D second_grid;
+layout(rgba32f, binding = 2) uniform image3D third_grid;
+layout(rgba32f, binding = 3) uniform image3D first_grid;
+//layout(rgba32f, binding = 1) uniform image2D data;
+
+//uniform mat4 viewmat;
+uniform float time;
+float res = 128.0f;
+void storeMatrix1(ivec3 texture_coordinates, mat4 data_matrix);
+void storeMatrix2(ivec3 texture_coordinates, mat3 second_data_matrix, vec3 second_vec);
+float trace(mat3 matrix);
+float trace(mat4 matrix);
+
+void main()
+{
+
+    ivec3 texCoords = ivec3(gl_GlobalInvocationID.xyz);
+    vec3 pos = 32.0f*(vec3(texCoords) - res/2)/res;
+
+    //base three metric
+    mat3 three_metric = mat3(
+        1, 0, 0,
+        0, 1, 0,
+        0, 0, 1
+    );
+
+    //base extrinsic metric
+    mat3 K_extrinsic = mat3(
+        0, 0, 0,
+        0, 1, 0,
+        0, 0, 1
+    );
+
+    float gamma = determinant(three_metric);
+
+    //gauge variables
+    float X = pow(gamma, -1.0f/3.0f);
+    float K = trace(inverse(three_metric)*K_extrinsic);
+
+    mat3 conformal_metric = X*three_metric;
+
+    //gauge variables
+    float alpha = 1;
+    vec3 beta = vec3(0, 0, 0);
+
+    //storing the metric
+    mat4 metric_variables = mat4(0);
+    metric_variables[0] = vec4(alpha, X, K, 0);
+    metric_variables[1] = vec4(conformal_metric[0], beta.x);
+    metric_variables[2] = vec4(conformal_metric[1], beta.y);
+    metric_variables[3] = vec4(conformal_metric[2], beta.z);
+    
+    storeMatrix1(texCoords, metric_variables);
+
+    //extrinsic conformal metric
+    mat3 A = X*(K_extrinsic - (1.0f/3.0f)*K*three_metric);
+
+    vec3 aux_christoffel = vec3(0);
+
+    storeMatrix2(texCoords, A, aux_christoffel);
+
+}
+
+float trace(mat3 matrix){
+    return matrix[0][0] + matrix[1][1] + matrix[2][2];
+}
+
+float trace(mat4 matrix){
+    return matrix[0][0] + matrix[1][1] + matrix[2][2] + matrix[3][3];
+}
+
+void storeMatrix1(ivec3 texture_coordinates, mat4 data_matrix){
+    imageStore(initial_grid, texture_coordinates*ivec3(4, 1, 1) + ivec3(0, 0, 0), data_matrix[0]);    
+    imageStore(initial_grid, texture_coordinates*ivec3(4, 1, 1) + ivec3(1, 0, 0), data_matrix[1]);  
+    imageStore(initial_grid, texture_coordinates*ivec3(4, 1, 1) + ivec3(2, 0, 0), data_matrix[2]);    
+    imageStore(initial_grid, texture_coordinates*ivec3(4, 1, 1) + ivec3(3, 0, 0), data_matrix[3]); 
+}
+
+void storeMatrix2(ivec3 texture_coordinates, mat3 second_data_matrix, vec3 second_vec){
+    imageStore(second_grid, texture_coordinates*ivec3(3, 1, 1) + ivec3(0, 0, 0), vec4(second_data_matrix[0], second_vec.x));    
+    imageStore(second_grid, texture_coordinates*ivec3(3, 1, 1) + ivec3(1, 0, 0), vec4(second_data_matrix[1], second_vec.y));  
+    imageStore(second_grid, texture_coordinates*ivec3(3, 1, 1) + ivec3(2, 0, 0), vec4(second_data_matrix[2], second_vec.z));    
+}//

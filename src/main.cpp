@@ -18,7 +18,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 const unsigned int SCR_WIDTH = 3440;
 const unsigned int SCR_HEIGHT = 1440;
 
-Camera cam(0.0f, 0.0f, 0.0f);
+Camera cam(0.0f, 20.0f, -32.0f);
 bool firstMouse = true;
 
 //view matrix
@@ -51,51 +51,89 @@ int main(){
         return -1;
     }
 
-    const int gridX = 800, gridY = 800;
-    cShader main("shaders(comp)/update.comp", gridX, gridY);
+    const int gridX = 128, gridY = 128, gridZ = 128;
+    //cShader main("shaders(comp)/update.comp", gridX, gridY);
     Shader shader("shaders(vf)/v_shader.vert","shaders(vf)/f_shader.frag");
 
-    unsigned int render, data, derivative;
+    unsigned int main_grid, second_grid, new_main_grid, new_second_grid, main_derivative, secondary_derivatives;
 
-    glGenTextures(1, &render);
+    glGenTextures(1, &main_grid);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, render);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, gridX, gridY, 0, GL_RGBA, GL_FLOAT, NULL);
-    glBindImageTexture(0, render, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+    glBindTexture(GL_TEXTURE_3D, main_grid);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, gridX*4, gridY, gridZ, 0, GL_RGBA, GL_FLOAT, NULL);
+    glBindImageTexture(0, main_grid, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
-    glGenTextures(1, &data);
+    glGenTextures(1, &second_grid);
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, data);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, gridX, gridY, 0, GL_RGBA, GL_FLOAT, NULL);
-    glBindImageTexture(1, data, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+    glBindTexture(GL_TEXTURE_3D, second_grid);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, gridX*3, gridY, gridZ, 0, GL_RGBA, GL_FLOAT, NULL);
+    glBindImageTexture(1, second_grid, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
-    glGenTextures(1, &derivative);
+    glGenTextures(1, &new_main_grid);
     glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, derivative);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, gridX, gridY, 0, GL_RGBA, GL_FLOAT, NULL);
-    glBindImageTexture(2, derivative, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+    glBindTexture(GL_TEXTURE_3D, new_main_grid);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, gridX*4, gridY, gridZ, 0, GL_RGBA, GL_FLOAT, NULL);
+    glBindImageTexture(2, new_main_grid, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
-    cShader initial("shaders(comp)/initial.comp", gridX, gridY);
+    glGenTextures(1, &new_second_grid);
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_3D, new_second_grid);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, gridX*3, gridY, gridZ, 0, GL_RGBA, GL_FLOAT, NULL);
+    glBindImageTexture(3, new_second_grid, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+
+    //3D textures for derivatives
+    glGenTextures(1, &main_derivative);
+    glActiveTexture(GL_TEXTURE4);
+    glBindTexture(GL_TEXTURE_3D, main_derivative);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, gridX*4, gridY*3, gridZ, 0, GL_RGBA, GL_FLOAT, NULL);
+    glBindImageTexture(4, main_derivative, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+
+    glGenTextures(1, &secondary_derivatives);
+    glActiveTexture(GL_TEXTURE5);
+    glBindTexture(GL_TEXTURE_3D, secondary_derivatives);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, gridX*4, gridY*3, gridZ, 0, GL_RGBA, GL_FLOAT, NULL);
+    glBindImageTexture(5, secondary_derivatives, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+
+    cShader simulation("comp_shaders/sim.glsl", gridX, gridY);
+    simulation.compile_shader();
+
+    cShader initial("comp_shaders/initial.comp", gridX, gridY);
+    initial.compile_shader();
+
+    cShader derivative("comp_shaders/derivative.comp", gridX, gridY);
+    derivative.compile_shader();
+
     initial.use();
+    derivative.use();
 
-    const int grid_size = 800; 
-    int vSize = grid_size*grid_size*5;
-    int iSize = 6*(grid_size-1)*(grid_size-1);
+    const int grid_size = 128; 
+    int vSize = grid_size*grid_size*grid_size*6;
 
-    float *vertices = new float[grid_size*grid_size*5];
-    unsigned int *indices = new unsigned int[6*(grid_size-1)*(grid_size-1)];
+    float *vertices = new float[vSize];
 
     if (!vertices)
     {
@@ -104,50 +142,38 @@ int main(){
 
     for(int i = 0; i < grid_size; i ++){
         for(int j = 0; j < grid_size; j ++){
-            vertices[5*(i*grid_size + j)+0] = (float)(i-grid_size/2);
-            vertices[5*(i*grid_size + j)+1] = 0.0f;
-            vertices[5*(i*grid_size + j)+2] = (float)(j-grid_size/2);
-            vertices[5*(i*grid_size + j)+3] = ((float)i + 0.5f)/((float)grid_size);
-            vertices[5*(i*grid_size + j)+4] = ((float)j + 0.5f)/((float)grid_size);
-            //std::cout << vertices[i*grid_size + j] << ", " << vertices[i*grid_size + j + 1] << ", " << vertices[i*grid_size + j +2] << ", " << vertices[i*grid_size + j + 3] << ", " << vertices[i*grid_size + j + 4] << std::endl;
-        }
-    }
-
-    for(int i = 0; i < grid_size - 1; i ++){
-        for(int j = 0; j < grid_size - 1; j ++){
-            int x = (i+1)*grid_size + (j+1);
-            int y = x - 1;
-            indices[6*(i*(grid_size-1) + j) + 0] = x;
-            indices[6*(i*(grid_size-1) + j) + 1] = x-1;
-            indices[6*(i*(grid_size-1) + j) + 2] = x-grid_size;
-            indices[6*(i*(grid_size-1) + j) + 3] = y;
-            indices[6*(i*(grid_size-1) + j) + 4] = y - grid_size;
-            indices[6*(i*(grid_size-1) + j) + 5] = y - grid_size + 1;
+            for(int k = 0; k < grid_size; k ++){
+                vertices[6*(i*grid_size*grid_size + j*grid_size + k)+0] = 32.0f*((float)i-grid_size/2)/((float)grid_size);
+                vertices[6*(i*grid_size*grid_size + j*grid_size + k)+1] = 32.0f*((float)j-grid_size/2)/((float)grid_size);
+                vertices[6*(i*grid_size*grid_size + j*grid_size + k)+2] = 32.0f*((float)k-grid_size/2)/((float)grid_size);
+                vertices[6*(i*grid_size*grid_size + j*grid_size + k)+3] = 4*i;
+                vertices[6*(i*grid_size*grid_size + j*grid_size + k)+4] = j;
+                vertices[6*(i*grid_size*grid_size + j*grid_size + k)+5] = k;
+            }
         }
     }
 
     unsigned int VBO, VAO, EBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
+    //glGenBuffers(1, &EBO);
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, vSize*sizeof(float), vertices, GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, iSize*sizeof(float), indices, GL_STATIC_DRAW);
+    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    //glBufferData(GL_ELEMENT_ARRAY_BUFFER, iSize*sizeof(float), indices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3*sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3*sizeof(float)));
     glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0); 
     glBindVertexArray(0);
 
     delete[] vertices;
-    delete[] indices;
 
     glm::mat4 viewspace = viewmatrix(gridX, gridY);
     //initial.use();
@@ -180,8 +206,8 @@ int main(){
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         //viewspace = viewmatrix(gridX, gridY);
-        initial.use();
-        initial.setFloat("time", (float)glfwGetTime());
+        //simulation.use();
+        //simulation.setFloat("time", (float)glfwGetTime());
         //initial.setMat4("viewmat", viewspace);
 
         view = cam.updateView();
@@ -189,16 +215,16 @@ int main(){
 
         shader.use();
         shader.setMat4("mvp", mvp);
-        shader.setFloat("time", (float)glfwGetTime());
-        shader.setInt("fibration", 1);
+        //shader.setFloat("time", (float)glfwGetTime());
+        //shader.setInt("fibration", 1);
 
         glBindVertexArray(VAO);
-        glDrawArrays(GL_POINTS, 0, grid_size*grid_size);
+        glDrawArrays(GL_POINTS, 0, grid_size*grid_size*grid_size);
 
-        shader.use();
+        /*shader.use();
         shader.setInt("fibration", 0);
         glBindVertexArray(VAO);
-        glDrawArrays(GL_POINTS, 0, grid_size*grid_size);
+        glDrawArrays(GL_POINTS, 0, grid_size*grid_size);*/
 
 
         //glDrawElements(GL_TRIANGLES, 6*(grid_size-1)*(grid_size-1), GL_UNSIGNED_INT, 0);
