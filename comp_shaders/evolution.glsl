@@ -8,6 +8,26 @@ layout(rgba32f, binding = 4) uniform image3D first_grid_derivatives;
 layout(rgba32f, binding = 5) uniform image3D second_grid_derivatives;
 
 #define PI 3.141592653589
+#define dx 0
+#define dy 1
+#define dz 2
+/*
+    current value key words to make things easier
+*/
+#define alpha first_mat[3].x
+#define X first_mat[3].y
+#define K first_mat[3].z
+#define beta vec3(first_mat[0].w, first_mat[1].w, first_mat[2].w)
+#define gamma mat3(first_mat)
+#define Aext mat3(second_mat)
+
+/*
+    Derivative Key words to make things easier
+*/
+#define delX vec3(derivatives_one[0][3].y, derivatives_one[1][3].y, derivatives_one[2][3].y)
+#define delK vec3(derivatives_one[0][3].z, derivatives_one[1][3].z, derivatives_one[2][3].z)
+#define delB mat3(derivatives_one[0][0].w, derivatives_one[0][1].w, derivatives_one[0][2].w, derivatives_one[1][0].w, derivatives_one[1][1].w, derivatives_one[1][2].w, derivatives_one[2][0].w, derivatives_one[2][1].w, derivatives_one[2][2].w)
+#define del_gamma(a) mat3(derivatives_one[(a)]) 
 
 //uniform mat4 viewmat;
 uniform float time;
@@ -18,6 +38,8 @@ mat4[3] read_derivatives_secondary(ivec3 texture_coordinates);
 
 mat4 readMatrix1(ivec3 texture_coordinates, ivec3 direction);
 mat4 readMatrix2(ivec3 texture_coordinates, ivec3 direction);
+float trace(mat3 matrix);
+float trace(mat4 matrix);
 
 void main()
 {
@@ -32,20 +54,30 @@ void main()
     mat4 first_mat = readMatrix1(texCoords, ivec3(0));
     mat4 second_mat = readMatrix2(texCoords, ivec3(0));
 
+    mat3 inv_gamma = inverse(gamma);
+
     /*  TABLE OF VALUES (IMPORTANT TO KEEP TRACK OF)
         (layouts)
         first_mat ->    y_00, y_01, y_02, beta.x
                         y_10, y_11, y_12, beta.y
                         y_20, y_21, y_22, beta.z
                         alph,  X  , K   , 0
-                        
+
         second_mat ->   A_00, A_01, A_02, cChri.x
                         A_10, A_11, A_12, cChri.y
                         A_20, A_21, A_22, cChri.z
                         0   ,  0  , 0   , 0  
     */
+    float dt_X = dot(delX, beta) + (2.0f/3.0f)*X*(alpha*K - trace(delB));
+    mat3 dt_gamma = (beta.x*del_gamma(0) + beta.y*del_gamma(1) + beta.z*del_gamma(2)) + gamma*transpose(delB) * delB*gamma - (2.0f/3.0f)*gamma*trace(delB) - 2*alpha*Aext;
+}
 
-    float dtX = dot(vec3(derivatives_one[0][3].y, derivatives_one[1][3].y, derivatives_one[2][3].y), vec3(first_mat[0].w, first_mat[1].w, first_mat[2].w)) + (2.0f/3.0f)*first_mat[3].y*(first_mat[3].x*first_mat[3].z - dot(vec3(derivatives_one[0][0].w , derivatives_one[1][1].w , derivatives_one[2][2].w), vec3(1.0f)));
+float trace(mat3 matrix){
+    return matrix[0][0] + matrix[1][1] + matrix[2][2];
+}
+
+float trace(mat4 matrix){
+    return matrix[0][0] + matrix[1][1] + matrix[2][2] + matrix[3][3];
 }
 
 mat4 readMatrix1(ivec3 texture_coordinates, ivec3 direction){
