@@ -21,7 +21,7 @@ mat4 transform(float parameter);
 void main()
 {
    //vec4 coordinates = texture(tex, aTexCoord.xyz);
-   vec4 coordinates = imageLoad(data, ivec3(aTexCoord) + ivec3(0, 0, 0));
+   vec4 coordinates = imageLoad(data, ivec3(aTexCoord) + ivec3(3, 0, 0));
 
    vec3 modPos = aPos;
 
@@ -29,7 +29,7 @@ void main()
    gl_PointSize = 1.0;
    gl_Position = mvp*vec4(modPos, 1);
    //TexCoord = aTexCoord;
-   vec3 color = vec3(1, 0.5 , 0);
+   //vec3 color = vec3(1, 0.5 , 0);
    
    //ourColor = color.xyz;
    ourColor = coordinates.xyz;

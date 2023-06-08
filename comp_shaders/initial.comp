@@ -5,7 +5,7 @@ layout(local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 layout(rgba32f, binding = 0) uniform image3D initial_grid;
 layout(rgba32f, binding = 1) uniform image3D second_grid;
 layout(rgba32f, binding = 2) uniform image3D third_grid;
-layout(rgba32f, binding = 3) uniform image3D first_grid;
+layout(rgba32f, binding = 3) uniform image3D fourth_grid;
 //layout(rgba32f, binding = 1) uniform image2D data;
 
 //uniform mat4 viewmat;
@@ -18,28 +18,29 @@ float trace(mat4 matrix);
 
 void main()
 {
-
     ivec3 texCoords = ivec3(gl_GlobalInvocationID.xyz);
     vec3 pos = 32.0f*(vec3(texCoords) - res/2)/res;
 
+    float m = 1.0f;
+    float r = length(pos);
+
+    //psi variable
+    float psi = 1 + m/(2.0f*r);
+
     //base three metric
-    mat3 three_metric = mat3(
-        1, 0, 0,
-        0, 1, 0,
-        0, 0, 1
-    );
+    mat3 three_metric = pow(psi, 4)*mat3(1.0f);
 
     //base extrinsic metric
     mat3 K_extrinsic = mat3(
         0, 0, 0,
-        0, 1, 0,
-        0, 0, 1
+        0, 0, 0,
+        0, 0, 0
     );
 
     float gamma = determinant(three_metric);
 
     //gauge variables
-    float X = pow(gamma, -1.0f/3.0f);
+    float X = max(pow(gamma, -1.0f/3.0f), 0.01);
     float K = trace(inverse(three_metric)*K_extrinsic);
 
     mat3 conformal_metric = X*three_metric;
@@ -50,10 +51,10 @@ void main()
 
     //storing the metric
     mat4 metric_variables = mat4(0);
-    metric_variables[0] = vec4(alpha, X, K, 0);
-    metric_variables[1] = vec4(conformal_metric[0], beta.x);
-    metric_variables[2] = vec4(conformal_metric[1], beta.y);
-    metric_variables[3] = vec4(conformal_metric[2], beta.z);
+    metric_variables[0] = vec4(conformal_metric[0], beta.x);
+    metric_variables[1] = vec4(conformal_metric[1], beta.y);
+    metric_variables[2] = vec4(conformal_metric[2], beta.z);
+    metric_variables[3] = vec4(alpha, X, K, 0);
     
     storeMatrix1(texCoords, metric_variables);
 
