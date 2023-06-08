@@ -7,6 +7,8 @@ layout(rgba32f, binding = 3) uniform image3D new_second_grid;
 layout(rgba32f, binding = 4) uniform image3D first_grid_derivatives;
 layout(rgba32f, binding = 5) uniform image3D second_grid_derivatives;
 
+#define x_step 0.25
+
 #define PI 3.141592653589
 #define dx 0
 #define dy 1
@@ -28,6 +30,17 @@ layout(rgba32f, binding = 5) uniform image3D second_grid_derivatives;
 #define delK vec3(derivatives_one[0][3].z, derivatives_one[1][3].z, derivatives_one[2][3].z)
 #define delB mat3(derivatives_one[0][0].w, derivatives_one[0][1].w, derivatives_one[0][2].w, derivatives_one[1][0].w, derivatives_one[1][1].w, derivatives_one[1][2].w, derivatives_one[2][0].w, derivatives_one[2][1].w, derivatives_one[2][2].w)
 #define del_gamma(a) mat3(derivatives_one[(a)]) 
+
+/*
+    Second Derivatives
+*/
+#define del_2_alpha(a, b, c, d) ((imageLoad(first_grid_derivatives, (texCoords + ivec3(b, c, d))*ivec3(4, 3, 1) + ivec3(3, a, 0))).x - (imageLoad(first_grid_derivatives, (texCoords - ivec3(b, c, d))*ivec3(4, 3, 1) + ivec3(3, a, 0))).x)/(2*x_step);
+#define del_2_alpha_mat mat3(del_2_alpha(0, 1, 0, 0), del_2_alpha(0, 0, 1, 0), del_2_alpha(0, 0, 0, 1), del_2_alpha(1, 1, 0, 0), del_2_alpha(1, 0, 1, 0), del_2_alpha(1, 0, 0, 1), del_2_alpha(2, 1, 0, 0), del_2_alpha(2, 0, 1, 0), del_2_alpha(2, 0, 0, 1))
+
+/*Christoffel symbols*/
+//individual symbols
+#define christ_sym(i, k, l) 0.5f*(inverse(gamma)[i][0]*(del_gamma(l)[0][k] + del_gamma(k)[0][l] - del_gamma(0)[k][l]) + inverse(gamma)[i][1]*(del_gamma(l)[1][k] + del_gamma(k)[1][l] - del_gamma(1)[k][l]) + inverse(gamma)[i][2]*(del_gamma(l)[2][k] + del_gamma(k)[2][l] - del_gamma(2)[k][l]))
+#define christoffel_mat(i) mat3(christ_sym(i, 0, 0), christ_sym(i, 0, 1), christ_sym(i, 0, 2), christ_sym(i, 1, 0), christ_sym(i, 1, 1), christ_sym(i, 1, 2), christ_sym(i, 2, 0), christ_sym(i, 2, 1), christ_sym(i, 2, 2))
 
 //uniform mat4 viewmat;
 uniform float time;
@@ -70,6 +83,7 @@ void main()
     */
     float dt_X = dot(delX, beta) + (2.0f/3.0f)*X*(alpha*K - trace(delB));
     mat3 dt_gamma = (beta.x*del_gamma(0) + beta.y*del_gamma(1) + beta.z*del_gamma(2)) + gamma*transpose(delB) * delB*gamma - (2.0f/3.0f)*gamma*trace(delB) - 2*alpha*Aext;
+    float dt_K = dot(delK, beta)*K;
 }
 
 float trace(mat3 matrix){
