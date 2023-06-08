@@ -84,6 +84,5 @@ void storeMatrix2(ivec3 texture_coordinates, mat4 sec_data_matrix, int der)
 {
     imageStore(second_deriv, texture_coordinates*ivec3(3, 3, 1) + ivec3(0, der, 0), sec_data_matrix[0]);    
     imageStore(second_deriv, texture_coordinates*ivec3(3, 3, 1) + ivec3(1, der, 0), sec_data_matrix[1]);  
-    imageStore(second_deriv, texture_coordinates*ivec3(3, 3, 1) + ivec3(2, der, 0), sec_data_matrix[2]);    
-}
-//
+    imageStore(second_deriv, texture_coordinates*ivec3(3, 3, 1) + ivec3(2, der, 0), sec_data_matrix[2]);
+}//

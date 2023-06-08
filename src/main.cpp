@@ -53,6 +53,7 @@ int main(){
 
     const int gridX = 128, gridY = 128, gridZ = 128;
     //cShader main("shaders(comp)/update.comp", gridX, gridY);
+    //cShader sim("comp_shaders/evolution.glsl", gridX, gridY);
     Shader shader("shaders(vf)/v_shader.vert","shaders(vf)/f_shader.frag");
 
     unsigned int main_grid, second_grid, new_main_grid, new_second_grid, main_derivative, secondary_derivatives;
@@ -118,7 +119,7 @@ int main(){
     glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, gridX*4, gridY*3, gridZ, 0, GL_RGBA, GL_FLOAT, NULL);
     glBindImageTexture(5, secondary_derivatives, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
-    cShader simulation("comp_shaders/sim.glsl", gridX, gridY);
+    cShader simulation("comp_shaders/evolution.glsl", gridX, gridY);
     simulation.compile_shader();
 
     cShader initial("comp_shaders/initial.comp", gridX, gridY);

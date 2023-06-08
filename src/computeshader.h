@@ -8,8 +8,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-const char *LoadCShader(const std::string &file){
-    /*std::ifstream shaderFile;
+/*const char *LoadCShader(const std::string &file){
+    std::fstream shaderFile;
     unsigned int shaderFileLength;
 
     shaderFile.open(file);
@@ -24,7 +24,7 @@ const char *LoadCShader(const std::string &file){
     //std::cout << shaderFileLength << std::endl;
     shaderFile.seekg(0, shaderFile.beg);
 
-    GLchar *shaderCode = new GLchar[shaderFileLength + 1];
+    GLchar *shaderCode = new GLchar[shaderFileLength];
     shaderFile.read(shaderCode, shaderFileLength);
 
     shaderFile.close();
@@ -33,8 +33,8 @@ const char *LoadCShader(const std::string &file){
 
     //std::cout << shaderCode << std::endl;
 
-	return shaderCode;*/
-    std::string computeCode;
+	return shaderCode;
+    /*std::string computeCode;
         std::fstream cShaderFile;
         int vShaderLines = 1;
 
@@ -68,7 +68,7 @@ const char *LoadCShader(const std::string &file){
     //std::cout << ccode << std::endl;
 
     return cCode;
-}
+}*/
 
 class cShader
 {
@@ -78,18 +78,42 @@ public:
     int wgHeight;
     // constructor generates the shader on the fly
     // ------------------------------------------------------------------------
-    cShader(const std::string &computePath, int wid, int hig)
+    cShader(const std::string &file, int wid, int hig)
     {
         wgWidth = wid;
         wgHeight = hig;
 
-        const char *cShaderCode = LoadCShader(computePath);
+        //const char *cShaderCode = LoadCShader(computePath);
+        std::ifstream shaderFile (file, std::ifstream::binary);
+        int shaderFileLength;
+
+        //shaderFile.open(file);
+
+        if (shaderFile.fail())
+        {
+            throw std::runtime_error("COULD NOT FIND SHADER FILE");
+        }
+
+        shaderFile.seekg(0, shaderFile.end);
+        shaderFileLength = (int)shaderFile.tellg();
+        //std::cout << shaderFileLength << std::endl;
+        shaderFile.seekg(0, shaderFile.beg);
+
+        char *shaderCode = new char[shaderFileLength];
+        shaderFile.read(shaderCode, shaderFileLength);
+
+        shaderFile.close();
+
+        shaderCode[shaderFileLength] = '\0';
+
+        //std::cout << shaderCode << std::endl;
         
         unsigned int compute = glCreateShader(GL_COMPUTE_SHADER);
 
-        glShaderSource(compute, 1, &cShaderCode, NULL);
+        glShaderSource(compute, 1, &shaderCode, NULL);
+
         glCompileShader(compute);
-        checkCompileErrors(compute, computePath);
+        checkCompileErrors(compute, file);
         // shader Program
         ID = glCreateProgram();
         glAttachShader(ID, compute);
@@ -97,7 +121,28 @@ public:
     }
 
     void link_shader(const std::string &new_shader_path){
-        const GLchar *new_code = LoadCShader(new_shader_path);
+        //const GLchar *new_code = LoadCShader(new_shader_path);
+        std::fstream shaderFile;
+        unsigned int shaderFileLength;
+
+        shaderFile.open(new_shader_path);
+
+        if (shaderFile.fail())
+        {
+            throw std::runtime_error("COULD NOT FIND SHADER FILE");
+        }
+
+        shaderFile.seekg(0, shaderFile.end);
+        shaderFileLength = shaderFile.tellg();
+        //std::cout << shaderFileLength << std::endl;
+        shaderFile.seekg(0, shaderFile.beg);
+
+        GLchar *new_code = new GLchar[shaderFileLength];
+        shaderFile.read(new_code, shaderFileLength);
+
+        shaderFile.close();
+
+        new_code[shaderFileLength] = '\0';
 
         unsigned int new_shader = glCreateShader(GL_COMPUTE_SHADER);
 
