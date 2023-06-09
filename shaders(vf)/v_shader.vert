@@ -36,7 +36,7 @@ void main()
       modPos = modPos.zyx;
       float new_length; 
       modPos /= (1 + length(modPos)/scale);
-      gl_PointSize = 0.7;
+      gl_PointSize = 0.8;
    }
    if(fibration == 0){
       modPos = normalize(base_sphere)*scale;
