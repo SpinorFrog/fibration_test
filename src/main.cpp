@@ -63,8 +63,8 @@ int main(){
     glBindTexture(GL_TEXTURE_3D, main_grid);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, gridX*4, gridY, gridZ, 0, GL_RGBA, GL_FLOAT, NULL);
     glBindImageTexture(0, main_grid, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
@@ -73,8 +73,8 @@ int main(){
     glBindTexture(GL_TEXTURE_3D, second_grid);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, gridX*3, gridY, gridZ, 0, GL_RGBA, GL_FLOAT, NULL);
     glBindImageTexture(1, second_grid, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
@@ -83,8 +83,8 @@ int main(){
     glBindTexture(GL_TEXTURE_3D, new_main_grid);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, gridX*4, gridY, gridZ, 0, GL_RGBA, GL_FLOAT, NULL);
     glBindImageTexture(2, new_main_grid, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
@@ -93,8 +93,8 @@ int main(){
     glBindTexture(GL_TEXTURE_3D, new_second_grid);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, gridX*3, gridY, gridZ, 0, GL_RGBA, GL_FLOAT, NULL);
     glBindImageTexture(3, new_second_grid, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
@@ -119,8 +119,11 @@ int main(){
     glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, gridX*3, gridY*3, gridZ, 0, GL_RGBA, GL_FLOAT, NULL);
     glBindImageTexture(5, secondary_derivatives, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
-    cShader simulation("comp_shaders/evolution.glsl", gridX, gridY);
+    cShader simulation("comp_shaders/evolution_one.glsl", gridX, gridY);
     simulation.compile_shader();
+
+    cShader simulation_two("comp_shaders/evolution_two.glsl", gridX, gridY);
+    simulation_two.compile_shader();
 
     cShader initial("comp_shaders/initial.comp", gridX, gridY);
     initial.compile_shader();
