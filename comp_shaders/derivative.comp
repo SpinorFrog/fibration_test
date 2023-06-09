@@ -33,14 +33,19 @@ void main()
     mat4 dy_second_grid = (readMatrix2(texCoords, ivec3(0, 1, 0)) - readMatrix2(texCoords, ivec3(0, -1, 0)))/(2.0f*dx);
     mat4 dz_second_grid = (readMatrix2(texCoords, ivec3(0, 0, 1)) - readMatrix2(texCoords, ivec3(0, 0, -1)))/(2.0f*dx);
 
-    //store derivatives
-    storeMatrix1(texCoords, dx_first_grid, 0);
-    storeMatrix1(texCoords, dy_first_grid, 1);
-    storeMatrix1(texCoords, dz_first_grid, 2);
+    int factor = 1;
 
-    storeMatrix2(texCoords, dx_second_grid, 0);
-    storeMatrix2(texCoords, dy_second_grid, 1);
-    storeMatrix2(texCoords, dy_second_grid, 2);
+    if(texCoords.x == 0 || texCoords.x == 127 || texCoords.y == 0 || texCoords.y == 127 || texCoords.z == 0 || texCoords.z == 127)
+        factor = 0;
+
+    //store derivatives
+    storeMatrix1(texCoords, factor*dx_first_grid, 0);
+    storeMatrix1(texCoords, factor*dy_first_grid, 1);
+    storeMatrix1(texCoords, factor*dz_first_grid, 2);
+
+    storeMatrix2(texCoords, factor*dx_second_grid, 0);
+    storeMatrix2(texCoords, factor*dy_second_grid, 1);
+    storeMatrix2(texCoords, factor*dy_second_grid, 2);
 
 }
 
@@ -63,7 +68,7 @@ mat4 readMatrix1(ivec3 texture_coordinates, ivec3 direction){
 }
 
 mat4 readMatrix2(ivec3 texture_coordinates, ivec3 direction){
-    mat4 array = mat4(0.0f);
+    mat4 array;
     array[0] = imageLoad(second_grid, (texture_coordinates + direction)*ivec3(3, 1, 1) + ivec3(0, 0, 0));
     array[1] = imageLoad(second_grid, (texture_coordinates + direction)*ivec3(3, 1, 1) + ivec3(1, 0, 0));
     array[2] = imageLoad(second_grid, (texture_coordinates + direction)*ivec3(3, 1, 1) + ivec3(2, 0, 0));

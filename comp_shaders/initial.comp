@@ -22,7 +22,7 @@ void main()
     vec3 pos = 32.0f*(vec3(texCoords) - res/2)/res;
 
     float m = 1.0f;
-    float r = length(pos);
+    float r = max(length(pos), 0.01);
 
     //psi variable
     float psi = 1 + m/(2.0f*r);
@@ -40,7 +40,8 @@ void main()
     float gamma = determinant(three_metric);
 
     //gauge variables
-    float X = max(pow(gamma, -1.0f/3.0f), 0.01);
+    float X = max(pow(gamma, -1.0f/3.0f), 0.001);
+    //float X = 1;
     float K = trace(inverse(three_metric)*K_extrinsic);
 
     mat3 conformal_metric = X*three_metric;

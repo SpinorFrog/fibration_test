@@ -26,6 +26,7 @@ layout(rgba32f, binding = 5) uniform image3D second_grid_derivatives;
 /*
     Derivative Key words to make things easier
 */
+#define delAlph vec3(derivatives_one[0][3].x, derivatives_one[1][3].x, derivatives_one[2][3].x)
 #define delX vec3(derivatives_one[0][3].y, derivatives_one[1][3].y, derivatives_one[2][3].y)
 #define delK vec3(derivatives_one[0][3].z, derivatives_one[1][3].z, derivatives_one[2][3].z)
 #define delB mat3(derivatives_one[0][0].w, derivatives_one[0][1].w, derivatives_one[0][2].w, derivatives_one[1][0].w, derivatives_one[1][1].w, derivatives_one[1][2].w, derivatives_one[2][0].w, derivatives_one[2][1].w, derivatives_one[2][2].w)
@@ -34,13 +35,20 @@ layout(rgba32f, binding = 5) uniform image3D second_grid_derivatives;
 /*
     Second Derivatives
 */
-#define del_2_alpha(a, b, c, d) ((imageLoad(first_grid_derivatives, (texCoords + ivec3(b, c, d))*ivec3(4, 3, 1) + ivec3(3, a, 0))).x - (imageLoad(first_grid_derivatives, (texCoords - ivec3(b, c, d))*ivec3(4, 3, 1) + ivec3(3, a, 0))).x)/(2*x_step);
+#define del_2_alpha(a, b, c, d) ((imageLoad(first_grid_derivatives, (texCoords + ivec3(b, c, d))*ivec3(4, 3, 1) + ivec3(3, a, 0))).x - (imageLoad(first_grid_derivatives, (texCoords - ivec3(b, c, d))*ivec3(4, 3, 1) + ivec3(3, a, 0))).x)/(2*x_step)
 #define del_2_alpha_mat mat3(del_2_alpha(0, 1, 0, 0), del_2_alpha(0, 0, 1, 0), del_2_alpha(0, 0, 0, 1), del_2_alpha(1, 1, 0, 0), del_2_alpha(1, 0, 1, 0), del_2_alpha(1, 0, 0, 1), del_2_alpha(2, 1, 0, 0), del_2_alpha(2, 0, 1, 0), del_2_alpha(2, 0, 0, 1))
 
 /*Christoffel symbols*/
 //individual symbols
 #define christ_sym(i, k, l) 0.5f*(inverse(gamma)[i][0]*(del_gamma(l)[0][k] + del_gamma(k)[0][l] - del_gamma(0)[k][l]) + inverse(gamma)[i][1]*(del_gamma(l)[1][k] + del_gamma(k)[1][l] - del_gamma(1)[k][l]) + inverse(gamma)[i][2]*(del_gamma(l)[2][k] + del_gamma(k)[2][l] - del_gamma(2)[k][l]))
 #define christoffel_mat(i) mat3(christ_sym(i, 0, 0), christ_sym(i, 0, 1), christ_sym(i, 0, 2), christ_sym(i, 1, 0), christ_sym(i, 1, 1), christ_sym(i, 1, 2), christ_sym(i, 2, 0), christ_sym(i, 2, 1), christ_sym(i, 2, 2))
+
+/*Covariant derivative of vector*/
+//conformal covariant derivative of d-alpha
+#define conf_cov_alpha mat3(del_2_alpha_mat - christoffel_mat(0)*delAlph.x - christoffel_mat(1)*delAlph.y - christoffel_mat(2)*delAlph.z)
+
+/*useful function*/
+#define outer_product(i, j) mat3((i).x*(j), (i).y*(j), (i).z*(j))
 
 //uniform mat4 viewmat;
 uniform float time;
@@ -53,6 +61,10 @@ mat4 readMatrix1(ivec3 texture_coordinates, ivec3 direction);
 mat4 readMatrix2(ivec3 texture_coordinates, ivec3 direction);
 float trace(mat3 matrix);
 float trace(mat4 matrix);
+
+void storeMatrixNew(ivec3 texture_coordinates, mat4 data_matrix);
+
+#define t_step 0.025f
 
 void main()
 {
@@ -83,7 +95,31 @@ void main()
     */
     float dt_X = dot(delX, beta) + (2.0f/3.0f)*X*(alpha*K - trace(delB));
     mat3 dt_gamma = (beta.x*del_gamma(0) + beta.y*del_gamma(1) + beta.z*del_gamma(2)) + gamma*transpose(delB) * delB*gamma - (2.0f/3.0f)*gamma*trace(delB) - 2*alpha*Aext;
-    float dt_K = dot(delK, beta)*K;
+
+    //intermediary variable
+    mat3 physical_cov_alpha = conf_cov_alpha + (0.5f*X)*(outer_product(delX, delAlph) + outer_product(delAlph, delX)) - (0.5f*X)*gamma*trace(inv_gamma*transpose(outer_product(delX, delAlph)));
+
+    float dt_K = dot(delK, beta)*K - X*trace(inv_gamma*transpose(physical_cov_alpha)) + alpha*trace(inv_gamma*inv_gamma*transpose(Aext*Aext)) + (1.0f/3.0f)*alpha*pow(K, 2);
+    vec3 dt_beta = vec3(0.0f);
+    float dt_alpha = 0.0f;
+
+    mat4 delta_metric = mat4(0.0f);
+    delta_metric[0] = vec4(dt_gamma[0], dt_beta.x);
+    delta_metric[1] = vec4(dt_gamma[1], dt_beta.y);
+    delta_metric[2] = vec4(dt_gamma[2], dt_beta.z);
+    delta_metric[3] = vec4(dt_alpha, dt_X, dt_K, 0);
+
+    delta_metric *= t_step;
+
+    storeMatrixNew(texCoords, first_mat + delta_metric);
+
+}
+
+void storeMatrixNew(ivec3 texture_coordinates, mat4 data_matrix){
+    imageStore(new_first_grid, texture_coordinates*ivec3(4, 1, 1) + ivec3(0, 0, 0), data_matrix[0]);    
+    imageStore(new_first_grid, texture_coordinates*ivec3(4, 1, 1) + ivec3(1, 0, 0), data_matrix[1]);  
+    imageStore(new_first_grid, texture_coordinates*ivec3(4, 1, 1) + ivec3(2, 0, 0), data_matrix[2]);    
+    imageStore(new_first_grid, texture_coordinates*ivec3(4, 1, 1) + ivec3(3, 0, 0), data_matrix[3]); 
 }
 
 float trace(mat3 matrix){
